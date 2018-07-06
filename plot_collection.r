@@ -7,24 +7,27 @@ source("functions.r")
 
 DATA <- Load.DATA()
 
+DATA$Year.original <- DATA$Year
+DATA$Year[is.na(DATA$Year)] <- 1980
+DATA$Year[(DATA$Year<1980)] <- 1980
 
+DATA$Release <- as.POSIXct(sprintf("%04i-01-01 00:00:00",DATA$Year))
+summary(DATA$Release)
 
-str(DATA)
-levels(DATA$Acquired.From)
-table(addNA(DATA$Acquired.From))
+DATA$Date <- as.POSIXct(ifelse(!is.na(DATA$Acquired.Date),
+                    as.POSIXct(DATA$Acquired.Date),
+             ifelse(DATA$Release<DATA$Status.DateTime,
+                    DATA$Release,
+                    DATA$Status.DateTime)
+             ),origin="1970-01-01")
 
-table(addNA(DATA$Type))
-table(addNA(DATA$Subtype))
-table(addNA(DATA$Own))
-table(addNA(DATA$Acquired.From))
+                    
 
+hist(DATA$Date,breaks="months",freq=TRUE)
+hist(DATA$Acquired.Date,breaks="months",freq=TRUE)
+hist(DATA$Release,breaks="year",freq=TRUE)
+                         
 
-
-
-
-head(DATA)
-HIDE <- -1*c(2,5,7)
-head(DATA[,HIDE])
 
 subset(DATA[,HIDE],Own==FALSE)
 (subset(DATA[,HIDE],Own==FALSE & Plays<=0))
