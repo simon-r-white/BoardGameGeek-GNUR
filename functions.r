@@ -32,6 +32,7 @@ Calls.to.bgg <- function( Details, Queries, delay=120 ) {
             WAITING <- FALSE
             cat("XML received\n")
         }
+        cat( sapply( CALLS, FUN=function(X){X$status} ),"\n" )
     }
     return( CALLS )
 }
@@ -56,7 +57,7 @@ Save.XML <- function( Contents ) {
 
 
 Extract.Collection <- function( Contents ) {
-
+    
     ALL.DATA <- list()
 
     for( cNAME in names(Contents) ) {
@@ -86,47 +87,49 @@ Extract.Collection <- function( Contents ) {
 
         Total.Items <- as.numeric( xml_attr( xml_find_all( Collection, "/items" ), attr="totalitems" ) )
 
-        for ( IDX in 1:Total.Items ) {
-            if(0){
-                IDX <- 1
+        if( Total.Items>0 ) {
+            for ( IDX in 1:Total.Items ) {
+                if(0){
+                    IDX <- 1
+                }
+                ## xml_children( Collection )
+                ITEM <- xml_children( Collection )[[IDX]]
+                gID.LIST <- as.list(xml_attrs( ITEM ))
+                gNAME <- xml_text( xml_find_all( ITEM ,".//name") )
+                gYEAR <- xml_integer( xml_find_all( ITEM ,".//yearpublished") )
+                gPLAYS <- xml_integer( xml_find_all( ITEM ,".//numplays") )
+                gSTATUS.LIST <- as.list(xml_attrs( xml_find_all( ITEM ,".//status") ))
+                gPRIVATE.LIST <- as.list(xml_attrs( xml_find_all( ITEM ,".//privateinfo") ))
+                gSTATS.LIST <- as.list(xml_attrs( xml_find_all( ITEM ,".//stats") ))
+                gRATING.LIST <- as.list(xml_attrs( xml_find_all( ITEM ,".//stats/rating") ))
+
+                cat( sprintf("%15s [%04i] %s\n",cNAME,IDX,gNAME) )
+                
+                DATA[IDX,"Game"] <- gNAME
+                DATA[IDX,"Year"] <- if(length(gYEAR)==0){NA}else{gYEAR}
+                DATA[IDX,"Plays"] <- gPLAYS
+                DATA[IDX,"Game.ID"] <- gID.LIST[["objectid"]]
+                DATA[IDX,"Type"] <- gID.LIST[["objecttype"]]
+                DATA[IDX,"Subtype"] <- gID.LIST[["subtype"]]
+                DATA[IDX,"Collection.ID"] <- gID.LIST[["collid"]]
+
+                DATA[IDX,"Own"] <- if(gSTATUS.LIST[[1]]["own"]=="1"){TRUE}else{FALSE}
+                DATA[IDX,"Want"] <- if(gSTATUS.LIST[[1]]["want"]=="1"){TRUE}else{FALSE}
+                DATA[IDX,"WantToPlay"] <- if(gSTATUS.LIST[[1]]["wanttoplay"]=="1"){TRUE}else{FALSE}
+                DATA[IDX,"WantToBuy"] <- if(gSTATUS.LIST[[1]]["wanttobuy"]=="1"){TRUE}else{FALSE}
+                DATA[IDX,"Wishlist"] <- if(gSTATUS.LIST[[1]]["wishlist"]=="1"){TRUE}else{FALSE}
+                DATA[IDX,"Status.DateTime"] <- gSTATUS.LIST[[1]]["lastmodified"]
+
+                DATA[IDX,"Rating"] <- if(length(gRATING.LIST)==1){as.numeric(gRATING.LIST[[1]]["value"])}else{NA}
+                DATA[IDX,"Acquired.Date"] <- if(length(gPRIVATE.LIST)==1){gPRIVATE.LIST[[1]]["acquisitiondate"]}else{NA}
+                DATA[IDX,"Acquired.From"] <- if(length(gPRIVATE.LIST)==1){gPRIVATE.LIST[[1]]["acquiredfrom"]}else{NA}
+                DATA[IDX,"Price"] <- if(length(gPRIVATE.LIST)==1){as.numeric(gPRIVATE.LIST[[1]]["pricepaid"])}else{NA}
+                DATA[IDX,"Currency"] <- if(length(gPRIVATE.LIST)==1){gPRIVATE.LIST[[1]]["pp_currency"]}else{NA}
+
             }
-            ## xml_children( Collection )
-            ITEM <- xml_children( Collection )[[IDX]]
-            gID.LIST <- as.list(xml_attrs( ITEM ))
-            gNAME <- xml_text( xml_find_all( ITEM ,".//name") )
-            gYEAR <- xml_integer( xml_find_all( ITEM ,".//yearpublished") )
-            gPLAYS <- xml_integer( xml_find_all( ITEM ,".//numplays") )
-            gSTATUS.LIST <- as.list(xml_attrs( xml_find_all( ITEM ,".//status") ))
-            gPRIVATE.LIST <- as.list(xml_attrs( xml_find_all( ITEM ,".//privateinfo") ))
-            gSTATS.LIST <- as.list(xml_attrs( xml_find_all( ITEM ,".//stats") ))
-            gRATING.LIST <- as.list(xml_attrs( xml_find_all( ITEM ,".//stats/rating") ))
-
-            cat( sprintf("%15s [%04i] %s\n",cNAME,IDX,gNAME) )
             
-            DATA[IDX,"Game"] <- gNAME
-            DATA[IDX,"Year"] <- if(length(gYEAR)==0){NA}else{gYEAR}
-            DATA[IDX,"Plays"] <- gPLAYS
-            DATA[IDX,"Game.ID"] <- gID.LIST[["objectid"]]
-            DATA[IDX,"Type"] <- gID.LIST[["objecttype"]]
-            DATA[IDX,"Subtype"] <- gID.LIST[["subtype"]]
-            DATA[IDX,"Collection.ID"] <- gID.LIST[["collid"]]
-
-            DATA[IDX,"Own"] <- if(gSTATUS.LIST[[1]]["own"]=="1"){TRUE}else{FALSE}
-            DATA[IDX,"Want"] <- if(gSTATUS.LIST[[1]]["want"]=="1"){TRUE}else{FALSE}
-            DATA[IDX,"WantToPlay"] <- if(gSTATUS.LIST[[1]]["wanttoplay"]=="1"){TRUE}else{FALSE}
-            DATA[IDX,"WantToBuy"] <- if(gSTATUS.LIST[[1]]["wanttobuy"]=="1"){TRUE}else{FALSE}
-            DATA[IDX,"Wishlist"] <- if(gSTATUS.LIST[[1]]["wishlist"]=="1"){TRUE}else{FALSE}
-            DATA[IDX,"Status.DateTime"] <- gSTATUS.LIST[[1]]["lastmodified"]
-
-            DATA[IDX,"Rating"] <- if(length(gRATING.LIST)==1){as.numeric(gRATING.LIST[[1]]["value"])}else{NA}
-            DATA[IDX,"Acquired.Date"] <- if(length(gPRIVATE.LIST)==1){gPRIVATE.LIST[[1]]["acquisitiondate"]}else{NA}
-            DATA[IDX,"Acquired.From"] <- if(length(gPRIVATE.LIST)==1){gPRIVATE.LIST[[1]]["acquiredfrom"]}else{NA}
-            DATA[IDX,"Price"] <- if(length(gPRIVATE.LIST)==1){as.numeric(gPRIVATE.LIST[[1]]["pricepaid"])}else{NA}
-            DATA[IDX,"Currency"] <- if(length(gPRIVATE.LIST)==1){gPRIVATE.LIST[[1]]["pp_currency"]}else{NA}
-
+            ALL.DATA[[cNAME]] <- DATA
         }
-
-        ALL.DATA[[cNAME]] <- DATA
     }
 
 
