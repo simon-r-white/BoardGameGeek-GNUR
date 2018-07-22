@@ -2,6 +2,12 @@
 ## ===== Code to fetch user collection from BGG XML API2
 ## =====
 
+## see
+## rsvg
+## svglite
+## svg(), part of cario device
+
+
 source("functions.r")
 
 
