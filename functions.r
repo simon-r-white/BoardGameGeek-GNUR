@@ -15,17 +15,29 @@ Calls.to.bgg <- function( Details, Queries, delay=120 ) {
     
     WAITING <- TRUE
 
+    for( qNAME in names(Queries) ) {
+        
+        CALLS[[qNAME]] <- GET(url="https://www.boardgamegeek.com/xmlapi2/collection",
+                              query=Queries[[qNAME]],
+                              set_cookies(.cookies=Login.Cookies)
+                              )
+    }
+
+    Sys.sleep(delay)
+    
     while ( WAITING ) {
         cat("Waiting while BGG API generates XML files...\n")
 
         for( qNAME in names(Queries) ) {
-        
-            CALLS[[qNAME]] <- GET(url="https://www.boardgamegeek.com/xmlapi2/collection",
-                                  query=Queries[[qNAME]],
-                                  set_cookies(.cookies=Login.Cookies)
-                                  )
-        }
 
+            if( CALLS[[qNAME]]$status != 200 ) {
+                CALLS[[qNAME]] <- GET(url="https://www.boardgamegeek.com/xmlapi2/collection",
+                                      query=Queries[[qNAME]],
+                                      set_cookies(.cookies=Login.Cookies)
+                                      )
+            }
+        }
+        
         Sys.sleep(delay)
         
         if( all(sapply( CALLS, FUN=function(X){X$status} ) == 200) ) {

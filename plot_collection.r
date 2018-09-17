@@ -9,6 +9,7 @@
 
 
 source("functions.r")
+library("scales")
 
 
 DATA <- Load.DATA()
@@ -17,21 +18,43 @@ DATA$Year.original <- DATA$Year
 DATA$Year[is.na(DATA$Year)] <- 1980
 DATA$Year[(DATA$Year<1980)] <- 1980
 
-DATA$Release <- as.POSIXct(sprintf("%04i-01-01 00:00:00",DATA$Year))
-summary(DATA$Release)
+DATA$Release.Date <- as.Date(sprintf("%04i-01-01",DATA$Year))
+DATA$Status.Date <- as.Date( DATA$Status.DateTime )
 
-DATA$Date <- as.POSIXct(ifelse(!is.na(DATA$Acquired.Date),
-                    as.POSIXct(DATA$Acquired.Date),
-             ifelse(DATA$Release<DATA$Status.DateTime,
-                    DATA$Release,
-                    DATA$Status.DateTime)
-             ),origin="1970-01-01")
+DATA$Date <- as.Date(ifelse(!is.na(DATA$Acquired.Date), DATA$Acquired.Date, DATA$Release.Date ), origin="1970-01-01")
 
                     
+if( 0 ) {
+    layout(matrix(1:3,ncol=1))
 
-hist(DATA$Date,breaks="months",freq=TRUE)
-hist(DATA$Acquired.Date,breaks="months",freq=TRUE)
-hist(DATA$Release,breaks="year",freq=TRUE)
+    H1 <- hist(DATA[which(DATA$Own==TRUE),"Date"],
+               breaks="quarter",freq=TRUE,main="Games (Own,All,All)",xlab="Time")
+    H2 <- hist(DATA[which(DATA$Own==TRUE & is.na(DATA$Acquired.Date)),"Date"],
+               breaks="quarter",freq=TRUE,plot=FALSE)
+    plot(H2,add=TRUE,col=alpha("red",0.5))
+    H3 <- hist(DATA[which(DATA$Own==TRUE & is.na(DATA$Acquired.From)),"Date"],
+               breaks="quarter",freq=TRUE,plot=FALSE)
+    plot(H3,add=TRUE,col=alpha("blue",0.5))
+
+    H1 <- hist(DATA[which(DATA$Own==TRUE & DATA$Subtype=="boardgame" ),"Date"],
+               breaks="quarter",freq=TRUE,main="Games (Own,Base,All)",xlab="Time")
+    H2 <- hist(DATA[which(DATA$Own==TRUE & DATA$Subtype=="boardgame" & is.na(DATA$Acquired.Date)),"Date"],
+               breaks="quarter",freq=TRUE,plot=FALSE)
+    plot(H2,add=TRUE,col=alpha("red",0.5))
+    H3 <- hist(DATA[which(DATA$Own==TRUE & DATA$Subtype=="boardgame" & is.na(DATA$Acquired.From)),"Date"],
+               breaks="quarter",freq=TRUE,plot=FALSE)
+    plot(H3,add=TRUE,col=alpha("blue",0.5))
+
+    H1 <- hist(DATA[which(DATA$Own==TRUE & DATA$Subtype=="boardgame" ),"Date"],
+               breaks="quarter",freq=TRUE,main="Games (Own,Base,Played)",xlab="Time")
+    H2 <- hist(DATA[which(DATA$Own==TRUE & DATA$Subtype=="boardgame" & (DATA$Plays>0)),"Date"],
+               breaks="quarter",freq=TRUE,plot=FALSE)
+    plot(H2,add=TRUE,col=alpha("red",0.5))
+
+}
+
+
+
                          
 
 
